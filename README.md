@@ -154,7 +154,7 @@ Data scanned: minimal (Parquet optimized)
 Cost per query: near zero
 
 
-🔹 Phase 6 — Gold Layer (Athena CTAS)
+### 🔹 Phase 6 — Gold Layer (Athena CTAS)
 
 Created aggregated datasets using CTAS.
 
@@ -169,7 +169,7 @@ Fast and scalable
 Stored directly in S3
 
 
-🔹 Phase 7 — Dashboard (Looker Studio)
+### 🔹 Phase 7 — Dashboard (Looker Studio)
 
 Built an interactive HR analytics dashboard.
 
