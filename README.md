@@ -1,200 +1,142 @@
 # 🚀 WorkforceIQ — End-to-End HR Analytics Pipeline on AWS
 
 ## 📌 Overview
-WorkforceIQ is an end-to-end HR analytics pipeline built on AWS using a **Medallion Architecture (Bronze → Silver → Gold)**.
+WorkforceIQ is an end-to-end HR analytics pipeline designed to transform raw employee data into business-ready insights using a scalable cloud-based architecture on AWS.
 
-The project processes raw HR data into analytics-ready datasets and delivers business insights through an interactive dashboard.
-
-It simulates a real-world HR use case to analyze:
-- Attrition risk  
-- Salary distribution  
-- Workforce trends  
+The pipeline follows a **Bronze → Silver → Gold** pattern to enable structured data processing, efficient querying, and downstream analytics. It supports key HR use cases such as **attrition analysis, salary benchmarking, and workforce distribution**.
 
 ---
 
-## 🎯 Objective
-- Build a scalable AWS data pipeline  
-- Transform raw HR data into curated datasets  
-- Perform SQL-based analysis  
-- Deliver business insights via dashboard  
+## 🎯 Key Outcomes
+- Built a scalable data pipeline using serverless AWS services  
+- Transformed raw HR data into curated, analytics-ready datasets  
+- Enabled fast, low-cost querying using columnar storage (Parquet)  
+- Delivered actionable insights through an interactive dashboard  
 
 ---
 
 ## 🏗️ Architecture
 
-WorkforceIQ implements a **Medallion Architecture** on AWS:
+**Medallion Architecture (S3-based):**
 
 | Layer | Storage | Purpose |
-|-------|--------|--------|
-| 🥉 Bronze | S3 | Raw, unprocessed HR data (CSV) |
-| 🥈 Silver | S3 | Cleaned, validated data (Parquet) |
-| 🥇 Gold | S3 (via Athena CTAS) | Aggregated, business-ready data |
+|------|--------|--------|
+| 🥉 Bronze | S3 | Raw HR data (CSV) |
+| 🥈 Silver | S3 | Cleaned, enriched data (Parquet) |
+| 🥇 Gold | S3 (Athena CTAS) | Aggregated, business-ready datasets |
 
 ### Data Flow
 
 S3 (Bronze)  
-→ Glue Crawler  
-→ Glue ETL (PySpark)  
+→ AWS Glue Crawler  
+→ AWS Glue ETL (PySpark)  
 → S3 (Silver)  
-→ Glue Crawler  
-→ Athena (SQL + CTAS)  
+→ AWS Glue Crawler  
+→ AWS Athena (SQL + CTAS)  
 → S3 (Gold)  
 → Looker Studio Dashboard  
 
 ---
 
-## ☁️ AWS Services Used
-- **S3** — Data storage (Bronze, Silver, Gold layers)  
-- **AWS Glue** — Crawlers + ETL (PySpark)  
-- **AWS Athena** — Serverless SQL analytics  
-- **Google Looker Studio** — Dashboard visualization  
-
----
-
-## 📍 Region
-All services deployed in: `ap-south-1` (Mumbai)
+## ☁️ Tech Stack
+- AWS S3  
+- AWS Glue (Crawler + PySpark ETL)  
+- AWS Athena  
+- Python / PySpark  
+- Looker Studio  
 
 ---
 
 ## 📊 Dataset
-
-Synthetic HR dataset with 10,000 records and 17 columns.
-
-| Column | Description |
-|--------|------------|
-| employee_id | Unique ID (EMP00001 format) |
-| name | Employee name |
-| age | Age (22–60) |
-| gender | Male / Female / Non-binary |
-| education | Bachelor / Master / PhD / Diploma |
-| department | 8 departments |
-| job_level | Junior → Director |
-| location | 6 Indian cities |
-| salary | INR-based |
-| hire_date | 2010–2024 |
-| years_at_company | Derived |
-| performance_score | 1–5 |
-| training_hours | 0–120 |
-| manager_id | Reporting manager |
-| attrition | Yes / No |
-| last_promotion_year | 2015–2024 |
-| satisfaction_score | 1.0–5.0 |
+Synthetic HR dataset with ~10,000 records covering employee demographics, compensation, performance, and attrition indicators.
 
 ---
 
-## 🔄 Pipeline Breakdown
+## 🔄 Pipeline Implementation
 
-### 🔹 Phase 1 — S3 Setup
-Created 3 buckets:
-- `workforceiq-bronze-lav-2024`
-- `workforceiq-silver-lav-2024`
-- `workforceiq-gold-lav-2024`
+### 🔹 Data Ingestion (Bronze)
+Raw HR dataset ingested into S3 as the source-of-truth layer.
 
 ---
 
-### 🔹 Phase 2 — Data Ingestion
-- Uploaded `hr_raw_data.csv` (10,000 rows) to Bronze layer  
-- Serves as raw source of truth  
+### 🔹 Data Processing (Silver)
+ETL implemented using AWS Glue (PySpark):
+
+**Key transformations:**
+- Data cleaning and standardization  
+- Schema enforcement and type casting  
+- Feature engineering:
+  - `salary_band` (compensation segmentation)  
+  - `attrition_risk` (derived risk indicator)  
+- Conversion to Parquet for optimized storage and query performance  
 
 ---
 
-### 🔹 Phase 3 — Glue Crawler (Bronze)
+### 🔹 Analytics Layer (Athena)
+Serverless SQL queries used for exploratory and analytical workloads.
 
-- Crawler: `workforceiq-bronze-crawler`
-- Source: Bronze S3 bucket  
-- Database: `workforceiq_catalog`  
-- Table: `workforceiq_bronze_lav_20`  
-- Schema: Auto-detected (CSV, 17 columns)  
-
----
-
-### 🔹 Phase 4 — Glue ETL (Bronze → Silver)
-
-- Job: `workforceiq-bronze-to-silver`
-- Engine: PySpark (Glue 4.0)
-- Runtime: ~1 min 50 sec  
-- Output: Parquet (269 KB)
-
-#### Transformations Applied
-
-| Step | Action |
-|------|-------|
-| Deduplication | Removed duplicates |
-| Null handling | Cleaned missing values |
-| Type casting | Correct data types |
-| New column | salary_band |
-| New column | attrition_risk |
-| New column | processed_at |
-| Standardization | Cleaned text columns |
-| Optimization | CSV → Parquet (~75% reduction) |
+**Example use cases:**
+- Department-wise headcount analysis  
+- Attrition segmentation  
+- Salary benchmarking across job levels  
 
 ---
 
-### 🔹 Phase 5 — Athena (SQL Analytics)
+### 🔹 Gold Layer (Aggregations)
+Business-level datasets created using Athena CTAS:
 
-Performed serverless SQL queries on Silver data.
+| Table | Description |
+|------|------------|
+| gold_department_summary | Headcount, avg salary, attrition rate |
+| gold_attrition_risk | Risk segmentation by department & role |
+| gold_salary_band | Salary distribution with performance metrics |
 
-#### Sample Queries
+**Design choice:**  
+Athena CTAS used over Redshift to maintain a **serverless, cost-efficient architecture** while still enabling fast analytical queries.
+
+---
+
+### 🔹 Visualization Layer
+Interactive dashboard built using Looker Studio.
+
+**Capabilities:**
+- Attrition risk segmentation  
+- Department-level workforce insights  
+- Salary band analysis  
+- Filter-driven exploration  
+
+---
+
+## 📈 Business Insights
+- Identified departments with elevated attrition risk  
+- Observed correlation between compensation bands and attrition patterns  
+- Highlighted workforce distribution imbalances across teams  
+
+---
+
+## 💰 Cost Optimization
+- Leveraged serverless services (no infrastructure overhead)  
+- Used Parquet format to minimize Athena scan costs  
+- Avoided persistent warehouse costs (Redshift)  
+- Designed pipeline for low-cost analytical workloads  
+
+---
 
 
-SELECT department, COUNT(*) AS total_employees
-FROM hr_cleaned
-GROUP BY department;
+## ⚠️ Challenges & Decisions
+- Replaced QuickSight with Looker Studio due to access limitations  
+- Adopted Athena CTAS for Gold layer to maintain cost efficiency  
+- Handled schema inconsistencies during ETL stage  
 
-SELECT attrition_risk, COUNT(*) AS count
-FROM hr_cleaned
-GROUP BY attrition_risk;
+---
 
-SELECT salary_band, AVG(salary) AS avg_salary
-FROM hr_cleaned
-GROUP BY salary_band;
-Performance
-Query runtime: < 1 second
-Data scanned: minimal (Parquet optimized)
-Cost per query: near zero
+## 🚀 Future Enhancements
+- Introduce orchestration (Airflow)  
+- Integrate warehouse layer (Redshift/Snowflake)  
+- Add incremental data processing  
+- Expand dashboard with advanced KPIs  
 
+---
 
-### 🔹 Phase 6 — Gold Layer (Athena CTAS)
-
-Created aggregated datasets using CTAS.
-
-Table	Description
-gold_department_summary	Headcount, avg salary, attrition rate
-gold_attrition_risk	Risk breakdown by dept & job level
-gold_salary_band	Salary distribution analysis
-Why Athena instead of Redshift?
-No infrastructure setup
-Zero idle cost
-Fast and scalable
-Stored directly in S3
-
-
-### 🔹 Phase 7 — Dashboard (Looker Studio)
-
-Built an interactive HR analytics dashboard.
-
-Data Flow
-
-Athena → CSV Export → Google Sheets → Looker Studio
-
-Features
-Employee distribution by department
-Attrition risk segmentation
-Salary band analysis
-Interactive filters
-Key Insights
-High attrition in specific departments
-Lower salary bands → higher attrition
-Workforce imbalance across departments
-📊 Business Impact
-
-This pipeline enables:
-
-Early identification of attrition risks
-Data-driven HR decisions
-Better workforce planning
-💰 Cost Optimization
-Used Parquet to reduce scan cost
-Serverless architecture (Glue + Athena)
-Avoided Redshift (high cost)
-Used Looker Studio (free tool)
+## 🎤 Summary
+Designed and implemented a cloud-based HR analytics pipeline on AWS, transforming raw data into structured insights through a scalable and cost-efficient architecture.
